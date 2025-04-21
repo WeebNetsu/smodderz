@@ -1,0 +1,325 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:path/path.dart';
+import 'package:smodderz/models/models.dart';
+import 'package:smodderz/utils/utils.dart';
+
+class ModsView extends StatefulWidget {
+  const ModsView({super.key});
+
+  // this is so we can easily call the route
+  // to this component from other files
+  static route() => MaterialPageRoute(builder: (context) => const ModsView());
+
+  @override
+  State<ModsView> createState() => _ModsViewState();
+}
+
+class _ModsViewState extends State<ModsView> {
+  final List<ModModel> _mods = [];
+  final _config = ConfigModel();
+
+  Future<void> _getMods([BuildContext? context]) async {
+    // create any modding directories if they do not exist
+    if (!(await _config.regularModDirectory.exists())) {
+      await _config.regularModDirectory.create();
+    }
+
+    if (!(await _config.logicModDirectory.exists())) {
+      await _config.logicModDirectory.create();
+    }
+
+    if (!(await _config.sparkingZeroRegularDir.parent.exists())) {
+      if (context != null && context.mounted)
+        showMessage(context, "Sparking Zero Directory Does Not Exist", error: true);
+      return;
+    }
+
+    if (!(await _config.sparkingZeroRegularDir.exists())) {
+      // we can create this if it does not exist
+      await _config.sparkingZeroRegularDir.create();
+    }
+
+    if (!(await _config.sparkingZeroLogicDir.exists())) {
+      // we can create this if it does not exist
+      await _config.sparkingZeroLogicDir.create();
+    }
+
+    final List<ModModel> regularMods =
+        await _config.regularModDirectory.list().map((mod) {
+          //   final stat = mod.statSync();
+
+          //   if (stat.type == FileSystemEntityType.directory) {
+          //     // It's a directory
+          //   } else if (stat.type == FileSystemEntityType.file) {
+          //     // It's a file
+          //   }
+
+          final modName = basename(mod.path);
+
+          final installedMod = Directory(join(_config.sparkingZeroRegularDir.path, modName));
+
+          return ModModel(
+            modType: AvailableModTypes.regular,
+            name: modName,
+            installDir: Directory(mod.path),
+            outputDir: installedMod.existsSync() ? installedMod : null,
+          );
+        }).toList();
+
+    final List<ModModel> logicMods =
+        await _config.logicModDirectory.list().map((mod) {
+          final modName = basename(mod.path);
+
+          final installedMod = Directory(join(_config.sparkingZeroLogicDir.path, modName));
+          final stat = installedMod.statSync();
+
+          Directory? outputDir;
+
+          if (stat.type == FileSystemEntityType.file) {
+            // It's a file
+            if (File(installedMod.path).existsSync()) {
+              outputDir = installedMod;
+            }
+          } else {
+            if (installedMod.existsSync()) {
+              outputDir = installedMod;
+            }
+          }
+
+          //   print(installedMod.path);
+          //   print(installedMod.statSync().type.toString());
+          //   print(installedMod.existsSync());
+
+          return ModModel(
+            modType: AvailableModTypes.logic,
+            name: basename(mod.path),
+            installDir: Directory(mod.path),
+            outputDir: outputDir,
+          );
+        }).toList();
+
+    setState(() {
+      _mods.clear();
+      _mods.addAll([...regularMods, ...logicMods]);
+    });
+    // if (context.mounted) showMessage(context, "Mods Loaded");
+
+    //     final regularModsDirectory = entities.firstWhere((folderName) => folderName == "mods")
+
+    //     entities.forEach(print);
+  }
+
+  Future<void> _installAllMods(BuildContext context, AvailableModTypes modType) async {
+    final targetDirectory =
+        modType == AvailableModTypes.logic ? _config.sparkingZeroLogicDir : _config.sparkingZeroRegularDir;
+
+    if (!(await targetDirectory.exists())) {
+      // we can create this if it does not exist
+      await targetDirectory.create();
+    }
+
+    final selectedMods = _mods.where((mod) => mod.modType == modType);
+    final enableMods = selectedMods.firstOrNull?.outputDir == null;
+    await Future.wait(
+      selectedMods.map((mod) async {
+        final statMod = mod.installDir.statSync();
+
+        // if mod is installed
+        if (!enableMods) {
+          if (statMod.type == FileSystemEntityType.file) {
+            if (mod.outputDir != null) await File(mod.outputDir!.path).delete();
+          } else if (statMod.type == FileSystemEntityType.directory) {
+            if (mod.outputDir != null) await mod.outputDir!.delete(recursive: true);
+          } else {
+            if (context.mounted) showMessage(context, "Mod of invalid file type", error: true);
+          }
+        } else {
+          if (statMod.type == FileSystemEntityType.file) {
+            await File(mod.installDir.path).copy(join(targetDirectory.path, basename(mod.installDir.path)));
+          } else if (statMod.type == FileSystemEntityType.directory) {
+            await copyDirectory(mod.installDir, Directory(join(targetDirectory.path, mod.name)));
+          } else {
+            if (context.mounted) showMessage(context, "Mod of invalid file type", error: true);
+          }
+        }
+      }).toList(),
+    );
+
+    if (context.mounted) {
+      //   showMessage(context, "Mod Added");
+      await _getMods(context);
+    }
+  }
+
+  Future<void> _installMod(BuildContext context, ModModel mod) async {
+    final targetDirectory =
+        mod.modType == AvailableModTypes.logic ? _config.sparkingZeroLogicDir : _config.sparkingZeroRegularDir;
+
+    if (!(await targetDirectory.exists())) {
+      // we can create this if it does not exist
+      await targetDirectory.create();
+    }
+
+    final statMod = mod.installDir.statSync();
+
+    // if mod is installed
+    if (mod.outputDir != null) {
+      if (statMod.type == FileSystemEntityType.file) {
+        await File(mod.outputDir!.path).delete();
+      } else if (statMod.type == FileSystemEntityType.directory) {
+        await mod.outputDir!.delete(recursive: true);
+      } else {
+        if (context.mounted) showMessage(context, "Mod of invalid file type", error: true);
+      }
+    } else {
+      if (statMod.type == FileSystemEntityType.file) {
+        await File(mod.installDir.path).copy(join(targetDirectory.path, basename(mod.installDir.path)));
+      } else if (statMod.type == FileSystemEntityType.directory) {
+        await copyDirectory(mod.installDir, Directory(join(targetDirectory.path, mod.name)));
+      } else {
+        if (context.mounted) showMessage(context, "Mod of invalid file type", error: true);
+      }
+    }
+
+    if (context.mounted) {
+      //   showMessage(context, "Mod Added");
+      await _getMods(context);
+    }
+  }
+
+  Future<void> _getSparkingZeroDirectory(BuildContext context) async {
+    String? path = await FilePicker.platform.getDirectoryPath();
+
+    // the user closed the dialogue
+    if (path == null) return;
+
+    final newDir = Directory(path);
+
+    if (!(await newDir.exists())) {
+      if (context.mounted) showMessage(context, "Chosen directory does not exist", error: true);
+      return;
+    }
+
+    _config.sparkingZeroDirectory = newDir;
+    await _config.saveDataToFile();
+  }
+
+  Future<void> _loadData() async {
+    await _config.loadDataFromFile();
+    await _getMods();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    child: Text("Set Installation Path"),
+                    onPressed: () => _getSparkingZeroDirectory(context),
+                  ),
+                  SizedBox(width: 10),
+                  ElevatedButton(child: Text("Check Mods"), onPressed: () => _getMods(context)),
+                ],
+              ),
+              Text("Install Path: ${_config.sparkingZeroDirectory.path}"),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    children: [
+                      Text("Regular Mods", style: TextStyle(fontSize: 30)),
+                      SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: SizedBox(
+                          width: 400,
+                          child: ElevatedButton(
+                            onPressed: () => _installAllMods(context, AvailableModTypes.regular),
+                            child: Text("Enable/Disable All"),
+                          ),
+                        ),
+                      ),
+                      ..._mods
+                          .where((mod) => mod.modType == AvailableModTypes.regular)
+                          .map(
+                            (mod) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: SizedBox(
+                                width: 400,
+                                child: ElevatedButton(
+                                  onPressed: () => _installMod(context, mod),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        mod.outputDir == null
+                                            ? Colors.red
+                                            : Colors.green, // use `primary` if you're on older Flutter
+                                  ),
+                                  child: Text(mod.name),
+                                ),
+                              ),
+                            ),
+                          ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Text("Logic Mods", style: TextStyle(fontSize: 30)),
+                      SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: SizedBox(
+                          width: 400,
+                          child: ElevatedButton(
+                            onPressed: () => _installAllMods(context, AvailableModTypes.logic),
+                            child: Text("Enable/Disable All"),
+                          ),
+                        ),
+                      ),
+                      ..._mods
+                          .where((mod) => mod.modType == AvailableModTypes.logic)
+                          .map(
+                            (mod) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: SizedBox(
+                                width: 400,
+                                child: ElevatedButton(
+                                  onPressed: () => _installMod(context, mod),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        mod.outputDir == null
+                                            ? Colors.red
+                                            : Colors.green, // use `primary` if you're on older Flutter
+                                  ),
+                                  child: Text(mod.name),
+                                ),
+                              ),
+                            ),
+                          ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

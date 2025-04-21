@@ -15,7 +15,11 @@ class ConfigModel {
   /// This application logic mods location
   final Directory logicModDirectory = Directory('./mods/logic');
   late Directory _sparkingZeroDirectory;
+
+  /// No need to manually update, this will update whenever _sparkingZeroDirectory changes
   late Directory sparkingZeroRegularDir;
+
+  /// No need to manually update, this will update whenever _sparkingZeroDirectory changes
   late Directory sparkingZeroLogicDir;
 
   Directory get sparkingZeroDirectory => _sparkingZeroDirectory;
@@ -66,9 +70,8 @@ class ConfigModel {
     }
 
     // not decoding it will leave quotes in the string
-    sparkingZeroDirectory = Directory(jsonDecode(userDataJson['sparkingZeroDirectory'].toString()));
-    sparkingZeroRegularDir = Directory(join(sparkingZeroDirectory.path, "SparkingZERO", "Mods"));
-    sparkingZeroLogicDir = Directory(join(sparkingZeroDirectory.path, "SparkingZERO", "Content", "Paks", "LoicMods"));
+    // jsonDecode if that issuer ever happens again
+    sparkingZeroDirectory = Directory(userDataJson['sparkingZeroDirectory'].toString());
 
     return true;
   }
