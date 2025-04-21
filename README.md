@@ -2,11 +2,11 @@
 
 Simple app to help manage your Sparking Zero mods.
 
-Looking to use it yourself? I am still working on making it just be plug and play, if you're in a rush, simply edit the path variables in `lib\views\mods\view.dart` (`_sparkingZeroRegularDir` etc.). Then put all the mods you want installed inside a mods/logic or mods/regular folder (depending on where the mod should be installed to, logic is of course LogicMods).
+Looking to use it yourself? I am still working on making it just be plug and play, if you're in a rush, put all the mods you want installed inside a mods/logic or mods/regular folder (depending on where the mod should be installed to, logic is of course LogicMods), these folders will be auto generated as well once you check for mods via the software.
 
 ## Running
 
-Install VSCode and install the Flutter extension for VSCode. It will prompt you to install Flutter and project dependencies. You can also run the project from VSCode. I will add an executable to the releases section on GitHub once a more user-friendly release is ready
+Install VSCode and install the Flutter extension for VSCode. It will prompt you to install Flutter and project dependencies. You can also run the project from VSCode. I will add an executable to the releases section on GitHub once a more user-friendly release is ready.
 
 ---
 
