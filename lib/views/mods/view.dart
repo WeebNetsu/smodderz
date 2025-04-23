@@ -32,8 +32,9 @@ class _ModsViewState extends State<ModsView> {
     }
 
     if (!(await _config.sparkingZeroRegularDir.parent.exists())) {
-      if (context != null && context.mounted)
+      if (context != null && context.mounted) {
         showMessage(context, "Sparking Zero Directory Does Not Exist", error: true);
+      }
       return;
     }
 
