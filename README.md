@@ -1,12 +1,22 @@
 # SModderZ
 
-Simple app to help manage your Sparking Zero mods.
+This is a mod manager for Dragon Ball: Sparking Zero, it helps you quickly and easily enable and disable mods for your game.
 
-Looking to use it yourself? I am still working on making it just be plug and play, if you're in a rush, put all the mods you want installed inside a mods/logic or mods/regular folder (depending on where the mod should be installed to, logic is of course LogicMods), these folders will be auto generated as well once you check for mods via the software.
+## How To Use
 
-## Running
+1. Download the mod manager
+1. The directory you run the manager in will generate a folder called mods, in this folder there will be 2 other folders, logic and regular
+1. Copy your logic mods (`...DRAGON BALL Sparking! ZERO\SparkingZERO\Content\Paks\LogicMods`) into logic and regular mods (`...DRAGON BALL Sparking! ZERO\SparkingZERO\Mods`) into regular
+1. Click "Check Mods" to update available mod list
+1. Red mods are not enabled, green mods are enabled
 
-Install VSCode and install the Flutter extension for VSCode. It will prompt you to install Flutter and project dependencies. You can also run the project from VSCode. I will add an executable to the releases section on GitHub once a more user-friendly release is ready.
+![Preview Image](assets/preview.jpg)
+
+## Building
+
+If you want to build it yourself, here are easy steps:
+
+Install VSCode and install the Flutter extension for VSCode. It will prompt you to install Flutter and project dependencies. You can run the project from VSCode.
 
 ---
 
