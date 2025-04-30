@@ -24,11 +24,11 @@ class _ModsViewState extends State<ModsView> {
   Future<void> _getMods([BuildContext? context]) async {
     // create any modding directories if they do not exist
     if (!(await _config.regularModDirectory.exists())) {
-      await _config.regularModDirectory.create();
+      await _config.regularModDirectory.create(recursive: true);
     }
 
     if (!(await _config.logicModDirectory.exists())) {
-      await _config.logicModDirectory.create();
+      await _config.logicModDirectory.create(recursive: true);
     }
 
     if (!(await _config.sparkingZeroRegularDir.parent.exists())) {
