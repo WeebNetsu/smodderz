@@ -4,6 +4,12 @@ This is a mod manager for Dragon Ball: Sparking Zero, it helps you quickly and e
 
 ## How To Use
 
+### Video
+
+[![Tutorial Thumbnail](./assets/modmanager.jpg)](https://youtu.be/LrYOa9K8l_U?si=5xpkdWePDoRjkjCU)
+
+### Text
+
 1. Download the mod manager
 1. The directory you run the manager in will generate a folder called mods, in this folder there will be 2 other folders, logic and regular
 1. Copy your logic mods (`...DRAGON BALL Sparking! ZERO\SparkingZERO\Content\Paks\LogicMods`) into logic and regular mods (`...DRAGON BALL Sparking! ZERO\SparkingZERO\Mods`) into regular
