@@ -155,7 +155,10 @@ class _ModsViewState extends State<ModsView> {
     }
   }
 
-  Future<void> _installMod(BuildContext context, ModModel mod) async {
+  /// Install or uninstall mod
+  ///
+  /// Passing in explicit remove will force only removal or installation (if false - null by default) of a mod
+  Future<void> _installMod(BuildContext context, ModModel mod, {bool? explicitRemove}) async {
     final targetDirectory =
         mod.modType == AvailableModTypes.logic ? _config.sparkingZeroLogicDir : _config.sparkingZeroRegularDir;
 
@@ -166,18 +169,42 @@ class _ModsViewState extends State<ModsView> {
 
     final statMod = mod.installDir.statSync();
 
+    final List<ModModel> linkedMods = [];
+    // if mod name is .pak there are 2 other files that are linked to it
+    // which we hide for convenience
+    if (mod.name.endsWith('.pak') && explicitRemove == null) {
+      linkedMods.addAll(
+        _mods.where((selectedMod) {
+          // other paks are not related
+          if (selectedMod.name.endsWith(".pak")) return false;
+
+          return selectedMod.name.replaceAll(".utoc", "").replaceAll(".ucas", "") == mod.name.replaceAll(".pak", "");
+        }),
+      );
+    }
+
     // if mod is installed
     if (mod.outputDir != null) {
+      if (explicitRemove == false) return;
       if (statMod.type == FileSystemEntityType.file) {
         await File(mod.outputDir!.path).delete();
+
+        for (var linkedMod in linkedMods) {
+          if (context.mounted) await _installMod(context, linkedMod, explicitRemove: true);
+        }
       } else if (statMod.type == FileSystemEntityType.directory) {
         await mod.outputDir!.delete(recursive: true);
       } else {
         if (context.mounted) showMessage(context, "Mod of invalid file type", error: true);
       }
     } else {
+      if (explicitRemove == true) return;
       if (statMod.type == FileSystemEntityType.file) {
         await File(mod.installDir.path).copy(join(targetDirectory.path, basename(mod.installDir.path)));
+
+        for (var linkedMod in linkedMods) {
+          if (context.mounted) await _installMod(context, linkedMod, explicitRemove: false);
+        }
       } else if (statMod.type == FileSystemEntityType.directory) {
         await copyDirectory(mod.installDir, Directory(join(targetDirectory.path, mod.name)));
       } else {
@@ -186,6 +213,9 @@ class _ModsViewState extends State<ModsView> {
     }
 
     if (context.mounted) {
+      // explicit removal will only apply to mods that are not visible to the user
+      //   a null state for explicitRemove will allow a refresh
+      if (explicitRemove == true || explicitRemove == false) return;
       //   showMessage(context, "Mod Added");
       await _getMods(context);
     }
@@ -295,6 +325,8 @@ class _ModsViewState extends State<ModsView> {
                       ),
                       ..._mods
                           .where((mod) => mod.modType == AvailableModTypes.logic)
+                          //   only show pak mods for convenience
+                          .where((mod) => !mod.name.endsWith(".utoc") && !mod.name.endsWith(".ucas"))
                           .map(
                             (mod) => Padding(
                               padding: const EdgeInsets.only(bottom: 10),
