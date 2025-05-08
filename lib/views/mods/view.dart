@@ -18,6 +18,8 @@ class ModsView extends StatefulWidget {
 }
 
 class _ModsViewState extends State<ModsView> {
+  final TextEditingController _modSearch = TextEditingController();
+
   final List<ModModel> _mods = [];
   final _config = ConfigModel();
 
@@ -243,10 +245,24 @@ class _ModsViewState extends State<ModsView> {
     await _getMods();
   }
 
+  void _onSearchChanged() {
+    // this empty set state will trigger a refresh when search changes
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
     _loadData();
+
+    _modSearch.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _modSearch.removeListener(_onSearchChanged);
+    _modSearch.dispose();
+    super.dispose();
   }
 
   @override
@@ -257,6 +273,8 @@ class _ModsViewState extends State<ModsView> {
           child: Column(
             children: [
               SizedBox(height: 10),
+              Text("Install Path: ${_config.sparkingZeroDirectory.path}"),
+              SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -266,9 +284,17 @@ class _ModsViewState extends State<ModsView> {
                   ),
                   SizedBox(width: 10),
                   ElevatedButton(child: Text("Check Mods"), onPressed: () => _getMods(context)),
+                  SizedBox(width: 10),
+                  SizedBox(
+                    width: 200,
+                    child: TextField(
+                      controller: _modSearch,
+                      decoration: InputDecoration(hintText: 'Search Mods'),
+                      onChanged: (_) => _onSearchChanged(),
+                    ),
+                  ),
                 ],
               ),
-              Text("Install Path: ${_config.sparkingZeroDirectory.path}"),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,6 +315,11 @@ class _ModsViewState extends State<ModsView> {
                       ),
                       ..._mods
                           .where((mod) => mod.modType == AvailableModTypes.regular)
+                          .where((mod) {
+                            if (_modSearch.text.isEmpty) return true;
+
+                            return mod.name.toLowerCase().contains(_modSearch.text.toLowerCase());
+                          })
                           .map(
                             (mod) => Padding(
                               padding: const EdgeInsets.only(bottom: 10),
@@ -327,6 +358,11 @@ class _ModsViewState extends State<ModsView> {
                           .where((mod) => mod.modType == AvailableModTypes.logic)
                           //   only show pak mods for convenience
                           .where((mod) => !mod.name.endsWith(".utoc") && !mod.name.endsWith(".ucas"))
+                          .where((mod) {
+                            if (_modSearch.text.isEmpty) return true;
+
+                            return mod.name.toLowerCase().contains(_modSearch.text.toLowerCase());
+                          })
                           .map(
                             (mod) => Padding(
                               padding: const EdgeInsets.only(bottom: 10),
