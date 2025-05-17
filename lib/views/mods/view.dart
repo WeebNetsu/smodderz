@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
@@ -22,6 +23,12 @@ class _ModsViewState extends State<ModsView> {
 
   final List<ModModel> _mods = [];
   final _config = ConfigModel();
+
+  /// If dragging a file over the regular mods column
+  bool _draggingRegularMod = false;
+
+  /// If dragging a file over the logic mods column
+  bool _draggingLogicMod = false;
 
   Future<void> _getMods([BuildContext? context]) async {
     // create any modding directories if they do not exist
@@ -160,6 +167,33 @@ class _ModsViewState extends State<ModsView> {
   /// Install or uninstall mod
   ///
   /// Passing in explicit remove will force only removal or installation (if false - null by default) of a mod
+  Future<void> _importMod(BuildContext context, DropItem file, AvailableModTypes modType) async {
+    final targetDirectory =
+        modType == AvailableModTypes.logic ? _config.logicModDirectory : _config.regularModDirectory;
+
+    if (!(await targetDirectory.exists())) {
+      // we can create this if it does not exist
+      await targetDirectory.create();
+    }
+
+    // if mod is installed
+    if (await FileSystemEntity.isFile(file.path)) {
+      await File(file.path).copy(join(targetDirectory.path, basename(file.path)));
+    } else if (await FileSystemEntity.isDirectory(file.path)) {
+      await copyDirectory(Directory(file.path), Directory(join(targetDirectory.path, file.name)));
+    } else {
+      if (context.mounted) showMessage(context, "Mod of invalid file type", error: true);
+    }
+
+    if (context.mounted) {
+      showMessage(context, "Mods Added");
+      await _getMods(context);
+    }
+  }
+
+  /// Install or uninstall mod
+  ///
+  /// Passing in explicit remove will force only removal or installation (if false - null by default) of a mod
   Future<void> _installMod(BuildContext context, ModModel mod, {bool? explicitRemove}) async {
     final targetDirectory =
         mod.modType == AvailableModTypes.logic ? _config.sparkingZeroLogicDir : _config.sparkingZeroRegularDir;
@@ -267,6 +301,28 @@ class _ModsViewState extends State<ModsView> {
 
   @override
   Widget build(BuildContext context) {
+    final regularMods =
+        _mods.where((mod) => mod.modType == AvailableModTypes.regular).where((mod) {
+          if (_modSearch.text.isEmpty) return true;
+
+          return mod.name.toLowerCase().contains(_modSearch.text.toLowerCase());
+        }).toList();
+
+    final logicMods =
+        _mods
+            .where((mod) => mod.modType == AvailableModTypes.logic)
+            //   only show pak mods for convenience
+            .where((mod) => !mod.name.endsWith(".utoc") && !mod.name.endsWith(".ucas"))
+            .where((mod) {
+              if (_modSearch.text.isEmpty) return true;
+
+              return mod.name.toLowerCase().contains(_modSearch.text.toLowerCase());
+            })
+            .toList();
+
+    logicMods.sort((a, b) => a.name.compareTo(b.name));
+    regularMods.sort((a, b) => a.name.compareTo(b.name));
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -299,89 +355,128 @@ class _ModsViewState extends State<ModsView> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    children: [
-                      Text("Regular Mods", style: TextStyle(fontSize: 30)),
-                      SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: SizedBox(
-                          width: 400,
-                          child: ElevatedButton(
-                            onPressed: () => _installAllMods(context, AvailableModTypes.regular),
-                            child: Text("Enable/Disable All"),
-                          ),
-                        ),
-                      ),
-                      ..._mods
-                          .where((mod) => mod.modType == AvailableModTypes.regular)
-                          .where((mod) {
-                            if (_modSearch.text.isEmpty) return true;
-
-                            return mod.name.toLowerCase().contains(_modSearch.text.toLowerCase());
-                          })
-                          .map(
-                            (mod) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: SizedBox(
-                                width: 400,
-                                child: ElevatedButton(
-                                  onPressed: () => _installMod(context, mod),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        mod.outputDir == null
-                                            ? Colors.red
-                                            : Colors.green, // use `primary` if you're on older Flutter
+                  DropTarget(
+                    onDragDone: (detail) async {
+                      for (final file in detail.files) {
+                        await _importMod(context, file, AvailableModTypes.regular);
+                      }
+                      //   setState(() {
+                      //     // _list.addAll(detail.files);
+                      //     print(detail.files.first.path);
+                      //   });
+                    },
+                    onDragEntered: (detail) {
+                      setState(() {
+                        _draggingRegularMod = true;
+                      });
+                    },
+                    onDragExited: (detail) {
+                      setState(() {
+                        _draggingRegularMod = false;
+                      });
+                    },
+                    child: Container(
+                      color: _draggingRegularMod ? Colors.blue.withValues(alpha: 0.4) : Colors.black26,
+                      child:
+                          regularMods.isEmpty
+                              ? const Center(child: Text("Drop here"))
+                              : Column(
+                                children: [
+                                  Text("Regular Mods", style: TextStyle(fontSize: 30)),
+                                  SizedBox(height: 20),
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: SizedBox(
+                                      width: 400,
+                                      child: ElevatedButton(
+                                        onPressed: () => _installAllMods(context, AvailableModTypes.regular),
+                                        child: Text("Enable/Disable All"),
+                                      ),
+                                    ),
                                   ),
-                                  child: Text(mod.name),
-                                ),
+                                  ...regularMods.map(
+                                    (mod) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 10),
+                                      child: SizedBox(
+                                        width: 400,
+                                        child: ElevatedButton(
+                                          onPressed: () => _installMod(context, mod),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                mod.outputDir == null
+                                                    ? Colors.red
+                                                    : Colors.green, // use `primary` if you're on older Flutter
+                                          ),
+                                          child: Text(mod.name),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                    ],
+                    ),
                   ),
-                  Column(
-                    children: [
-                      Text("Logic Mods", style: TextStyle(fontSize: 30)),
-                      SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: SizedBox(
-                          width: 400,
-                          child: ElevatedButton(
-                            onPressed: () => _installAllMods(context, AvailableModTypes.logic),
-                            child: Text("Enable/Disable All"),
-                          ),
-                        ),
-                      ),
-                      ..._mods
-                          .where((mod) => mod.modType == AvailableModTypes.logic)
-                          //   only show pak mods for convenience
-                          .where((mod) => !mod.name.endsWith(".utoc") && !mod.name.endsWith(".ucas"))
-                          .where((mod) {
-                            if (_modSearch.text.isEmpty) return true;
 
-                            return mod.name.toLowerCase().contains(_modSearch.text.toLowerCase());
-                          })
-                          .map(
-                            (mod) => Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: SizedBox(
-                                width: 400,
-                                child: ElevatedButton(
-                                  onPressed: () => _installMod(context, mod),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        mod.outputDir == null
-                                            ? Colors.red
-                                            : Colors.green, // use `primary` if you're on older Flutter
+                  DropTarget(
+                    onDragDone: (detail) async {
+                      for (final file in detail.files) {
+                        await _importMod(context, file, AvailableModTypes.logic);
+                      }
+                      //   setState(() {
+                      //     // _list.addAll(detail.files);
+                      //     print(detail.files.first.path);
+                      //   });
+                    },
+                    onDragEntered: (detail) {
+                      setState(() {
+                        _draggingLogicMod = true;
+                      });
+                    },
+                    onDragExited: (detail) {
+                      setState(() {
+                        _draggingLogicMod = false;
+                      });
+                    },
+                    child: Container(
+                      color: _draggingLogicMod ? Colors.blue.withValues(alpha: 0.4) : Colors.black26,
+                      child:
+                          logicMods.isEmpty
+                              ? const Center(child: Text("Drop here"))
+                              : Column(
+                                children: [
+                                  Text("Logic Mods", style: TextStyle(fontSize: 30)),
+                                  SizedBox(height: 20),
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: SizedBox(
+                                      width: 400,
+                                      child: ElevatedButton(
+                                        onPressed: () => _installAllMods(context, AvailableModTypes.logic),
+                                        child: Text("Enable/Disable All"),
+                                      ),
+                                    ),
                                   ),
-                                  child: Text(mod.name),
-                                ),
+                                  ...logicMods.map(
+                                    (mod) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 10),
+                                      child: SizedBox(
+                                        width: 400,
+                                        child: ElevatedButton(
+                                          onPressed: () => _installMod(context, mod),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                mod.outputDir == null
+                                                    ? Colors.red
+                                                    : Colors.green, // use `primary` if you're on older Flutter
+                                          ),
+                                          child: Text(mod.name),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                    ],
+                    ),
                   ),
                 ],
               ),

@@ -1,7 +1,7 @@
 name: smodderz
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.5
+version: 0.1.6
 
 environment:
   sdk: ^3.7.2
@@ -16,6 +16,8 @@ dependencies:
   path: ^1.9.1
   # allow picking files and folders on system
   file_picker: ^10.1.2
+  # dragging and dropping new mods into the app
+  desktop_drop: ^0.6.0
 
 dev_dependencies:
   flutter_test:
