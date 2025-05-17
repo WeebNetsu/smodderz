@@ -5,7 +5,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:smodderz/models/models.dart';
+import 'package:smodderz/theme/theme.dart';
 import 'package:smodderz/utils/utils.dart';
+import 'package:smodderz/widgets/widgets.dart';
 
 class ModsView extends StatefulWidget {
   const ModsView({super.key});
@@ -329,7 +331,10 @@ class _ModsViewState extends State<ModsView> {
           child: Column(
             children: [
               SizedBox(height: 10),
-              Text("Install Path: ${_config.sparkingZeroDirectory.path}"),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text("Install Path: ${_config.sparkingZeroDirectory.path}"),
+              ),
               SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -376,7 +381,7 @@ class _ModsViewState extends State<ModsView> {
                       });
                     },
                     child: Container(
-                      color: _draggingRegularMod ? Colors.blue.withValues(alpha: 0.4) : Colors.black26,
+                      color: _draggingRegularMod ? Colors.blue.withValues(alpha: 0.4) : Palette.backgroundColor,
                       child:
                           regularMods.isEmpty
                               ? const Center(child: Text("Drop here"))
@@ -390,24 +395,26 @@ class _ModsViewState extends State<ModsView> {
                                       width: 400,
                                       child: ElevatedButton(
                                         onPressed: () => _installAllMods(context, AvailableModTypes.regular),
-                                        child: Text("Enable/Disable All"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Color.fromARGB(255, 241, 238, 34),
+                                        ),
+                                        child: Text(
+                                          "Enable/Disable All",
+                                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                        ),
                                       ),
                                     ),
                                   ),
+
                                   ...regularMods.map(
                                     (mod) => Padding(
                                       padding: const EdgeInsets.only(bottom: 10),
                                       child: SizedBox(
                                         width: 400,
-                                        child: ElevatedButton(
-                                          onPressed: () => _installMod(context, mod),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                mod.outputDir == null
-                                                    ? Colors.red
-                                                    : Colors.green, // use `primary` if you're on older Flutter
-                                          ),
-                                          child: Text(mod.name),
+                                        child: EnabledButtonWidget(
+                                          text: mod.name,
+                                          onClick: () => _installMod(context, mod),
+                                          enabled: mod.outputDir != null,
                                         ),
                                       ),
                                     ),
@@ -438,7 +445,7 @@ class _ModsViewState extends State<ModsView> {
                       });
                     },
                     child: Container(
-                      color: _draggingLogicMod ? Colors.blue.withValues(alpha: 0.4) : Colors.black26,
+                      color: _draggingLogicMod ? Colors.blue.withValues(alpha: 0.4) : Palette.backgroundColor,
                       child:
                           logicMods.isEmpty
                               ? const Center(child: Text("Drop here"))
@@ -452,7 +459,13 @@ class _ModsViewState extends State<ModsView> {
                                       width: 400,
                                       child: ElevatedButton(
                                         onPressed: () => _installAllMods(context, AvailableModTypes.logic),
-                                        child: Text("Enable/Disable All"),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Color.fromARGB(255, 241, 238, 34),
+                                        ),
+                                        child: Text(
+                                          "Enable/Disable All",
+                                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -461,15 +474,10 @@ class _ModsViewState extends State<ModsView> {
                                       padding: const EdgeInsets.only(bottom: 10),
                                       child: SizedBox(
                                         width: 400,
-                                        child: ElevatedButton(
-                                          onPressed: () => _installMod(context, mod),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                mod.outputDir == null
-                                                    ? Colors.red
-                                                    : Colors.green, // use `primary` if you're on older Flutter
-                                          ),
-                                          child: Text(mod.name),
+                                        child: EnabledButtonWidget(
+                                          text: mod.name,
+                                          onClick: () => _installMod(context, mod),
+                                          enabled: mod.outputDir != null,
                                         ),
                                       ),
                                     ),
