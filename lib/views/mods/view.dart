@@ -33,6 +33,7 @@ class _ModsViewState extends State<ModsView> {
   var logger = Logger(
     output: FileOutput(file: File("./smodderz.log")),
     printer: SimplePrinter(colors: false, printTime: true),
+    filter: AlwaysLogFilter(),
   );
   //   final logger = Logger(output: fileOutput);
 
@@ -365,6 +366,7 @@ class _ModsViewState extends State<ModsView> {
       output: FileOutput(file: File("./smodderz.log")),
       printer: SimplePrinter(colors: false, printTime: true),
       level: _userPreferences.developerMode ? Level.all : Level.warning,
+      filter: AlwaysLogFilter(),
     );
   }
 
