@@ -1,7 +1,7 @@
 name: smodderz
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.7
+version: 0.2.0
 
 environment:
   sdk: ^3.7.2
@@ -18,7 +18,13 @@ dependencies:
   file_picker: ^10.1.2
   # dragging and dropping new mods into the app
   desktop_drop: ^0.6.0
-
+  # to log any useful debug info
+  logger: ^2.5.0
+  # get app version
+  package_info_plus: ^8.3.0
+  # open links
+  url_launcher: ^6.3.1
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

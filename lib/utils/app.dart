@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Get the directory that your app has access to as file storage
 Future<Directory?> getAppDir() async {
@@ -72,7 +73,7 @@ int getDirectorySize(FileSystemEntity file) {
   return 0;
 }
 
-// Future<void> openUrl(String url) async {
-//   final uri = Uri.parse(url);
-//   if (await canLaunchUrl(uri)) await launchUrl(uri);
-// }
+Future<void> openUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) await launchUrl(uri);
+}
