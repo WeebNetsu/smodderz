@@ -28,6 +28,7 @@ class _ModsViewState extends State<ModsView> {
 
   final List<ModModel> _mods = [];
   final _config = ConfigModel();
+  //   bool _showDownloadUtocBypassButton = false;
   //   final logger = FileLogger();
 
   var logger = Logger(
@@ -153,6 +154,7 @@ class _ModsViewState extends State<ModsView> {
 
       setState(() {
         _warnings.add("UTOC Bypass was not found. Some mods may not work.");
+        // _showDownloadUtocBypassButton = true;
       });
     }
 
@@ -432,168 +434,188 @@ class _ModsViewState extends State<ModsView> {
                 child: Text("Install Path: ${_config.sparkingZeroDirectory.path}"),
               ),
               SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    child: Text("Set Installation Path"),
-                    onPressed: () => _getSparkingZeroDirectory(context),
-                  ),
-                  SizedBox(width: 10),
-                  ElevatedButton(
-                    child: Text("Check Mods"),
-                    onPressed: () => _getMods(context: context, skipLogs: false),
-                  ),
-                  _warnings.isNotEmpty
-                      ? Tooltip(message: _warnings.join("\n"), child: Icon(Icons.info, color: Colors.yellow))
-                      : Container(),
-                  SizedBox(width: 10),
-                  SizedBox(
-                    width: 200,
-                    child: TextField(
-                      controller: _modSearch,
-                      decoration: InputDecoration(hintText: 'Search Mods'),
-                      onChanged: (_) => _onSearchChanged(),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () async {
-                      await Navigator.pushNamed(context, AppRoutes.settings);
-                      //   fetch any new settings that were applied
-                      await _loadUserPreferences();
-                    },
-                    icon: Icon(Icons.settings),
-                  ),
-                ],
+
+              SizedBox(
+                width: 400,
+                child: TextField(
+                  controller: _modSearch,
+                  decoration: InputDecoration(hintText: 'Search Mods'),
+                  onChanged: (_) => _onSearchChanged(),
+                ),
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  DropTarget(
-                    onDragDone: (detail) async {
-                      for (final file in detail.files) {
-                        await _importMod(context, file, AvailableModTypes.regular);
-                      }
-                      //   setState(() {
-                      //     // _list.addAll(detail.files);
-                      //     print(detail.files.first.path);
-                      //   });
-                    },
-                    onDragEntered: (detail) {
-                      setState(() {
-                        _draggingRegularMod = true;
-                      });
-                    },
-                    onDragExited: (detail) {
-                      setState(() {
-                        _draggingRegularMod = false;
-                      });
-                    },
-                    child: Container(
-                      color: _draggingRegularMod ? Colors.blue.withValues(alpha: 0.4) : Palette.backgroundColor,
-                      child:
-                          regularMods.isEmpty
-                              ? const Center(child: Text("Drop here"))
-                              : Column(
-                                children: [
-                                  Text("Regular Mods", style: TextStyle(fontSize: 30)),
-                                  SizedBox(height: 20),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: SizedBox(
-                                      width: 400,
-                                      child: ElevatedButton(
-                                        onPressed: () => _installAllMods(context, AvailableModTypes.regular),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color.fromARGB(255, 241, 238, 34),
-                                        ),
-                                        child: Text(
-                                          "Enable/Disable All",
-                                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ElevatedButton(
+                        child: Text("Set Installation Path"),
+                        onPressed: () => _getSparkingZeroDirectory(context),
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        children: [
+                          ElevatedButton(
+                            child: Text("Check Mods"),
+                            onPressed: () => _getMods(context: context, skipLogs: false),
+                          ),
+                          SizedBox(width: 10),
+                          _warnings.isNotEmpty
+                              ? Tooltip(message: _warnings.join("\n"), child: Icon(Icons.info, color: Colors.yellow))
+                              : Container(),
+                        ],
+                      ),
+                      SizedBox(height: 10),
 
-                                  ...regularMods.map(
-                                    (mod) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 10),
-                                      child: SizedBox(
-                                        width: 400,
-                                        child: EnabledButtonWidget(
-                                          text: mod.name,
-                                          onClick: () => _installMod(context, mod),
-                                          enabled: mod.outputDir != null,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                    ),
+                      //   DropdownButton<String>(
+                      //     items: [DropdownMenuItem<String>(value: "utoc", child: Text("Download and install UTOC"))],
+                      //     hint: Text("Auto Install Mods"),
+                      //     onChanged: (value) {
+                      //       //   setState(() => selectedValue = value);
+                      //     },
+                      //   ),
+                      ElevatedButton(
+                        child: Text("Settings"),
+                        onPressed: () async {
+                          await Navigator.pushNamed(context, AppRoutes.settings);
+                          //   fetch any new settings that were applied
+                          await _loadUserPreferences();
+                        },
+                      ),
+                    ],
                   ),
 
-                  DropTarget(
-                    onDragDone: (detail) async {
-                      for (final file in detail.files) {
-                        await _importMod(context, file, AvailableModTypes.logic);
-                      }
-                      //   setState(() {
-                      //     // _list.addAll(detail.files);
-                      //     print(detail.files.first.path);
-                      //   });
-                    },
-                    onDragEntered: (detail) {
-                      setState(() {
-                        _draggingLogicMod = true;
-                      });
-                    },
-                    onDragExited: (detail) {
-                      setState(() {
-                        _draggingLogicMod = false;
-                      });
-                    },
-                    child: Container(
-                      color: _draggingLogicMod ? Colors.blue.withValues(alpha: 0.4) : Palette.backgroundColor,
-                      child:
-                          logicMods.isEmpty
-                              ? const Center(child: Text("Drop here"))
-                              : Column(
-                                children: [
-                                  Text("Logic Mods", style: TextStyle(fontSize: 30)),
-                                  SizedBox(height: 20),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: SizedBox(
-                                      width: 400,
-                                      child: ElevatedButton(
-                                        onPressed: () => _installAllMods(context, AvailableModTypes.logic),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Color.fromARGB(255, 241, 238, 34),
+                  Expanded(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        DropTarget(
+                          onDragDone: (detail) async {
+                            for (final file in detail.files) {
+                              await _importMod(context, file, AvailableModTypes.regular);
+                            }
+                            //   setState(() {
+                            //     // _list.addAll(detail.files);
+                            //     print(detail.files.first.path);
+                            //   });
+                          },
+                          onDragEntered: (detail) {
+                            setState(() {
+                              _draggingRegularMod = true;
+                            });
+                          },
+                          onDragExited: (detail) {
+                            setState(() {
+                              _draggingRegularMod = false;
+                            });
+                          },
+                          child: Container(
+                            color: _draggingRegularMod ? Colors.blue.withValues(alpha: 0.4) : Palette.backgroundColor,
+                            child:
+                                regularMods.isEmpty
+                                    ? const Center(child: Text("Drop here"))
+                                    : Column(
+                                      children: [
+                                        Text("Regular Mods", style: TextStyle(fontSize: 30)),
+                                        SizedBox(height: 20),
+                                        Padding(
+                                          padding: const EdgeInsets.only(bottom: 10),
+                                          child: SizedBox(
+                                            width: 400,
+                                            child: ElevatedButton(
+                                              onPressed: () => _installAllMods(context, AvailableModTypes.regular),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Color.fromARGB(255, 241, 238, 34),
+                                              ),
+                                              child: Text(
+                                                "Enable/Disable All",
+                                                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                        child: Text(
-                                          "Enable/Disable All",
-                                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+
+                                        ...regularMods.map(
+                                          (mod) => Padding(
+                                            padding: const EdgeInsets.only(bottom: 10),
+                                            child: SizedBox(
+                                              width: 400,
+                                              child: EnabledButtonWidget(
+                                                text: mod.name,
+                                                onClick: () => _installMod(context, mod),
+                                                enabled: mod.outputDir != null,
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  ),
-                                  ...logicMods.map(
-                                    (mod) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 10),
-                                      child: SizedBox(
-                                        width: 400,
-                                        child: EnabledButtonWidget(
-                                          text: mod.name,
-                                          onClick: () => _installMod(context, mod),
-                                          enabled: mod.outputDir != null,
+                          ),
+                        ),
+
+                        DropTarget(
+                          onDragDone: (detail) async {
+                            for (final file in detail.files) {
+                              await _importMod(context, file, AvailableModTypes.logic);
+                            }
+                            //   setState(() {
+                            //     // _list.addAll(detail.files);
+                            //     print(detail.files.first.path);
+                            //   });
+                          },
+                          onDragEntered: (detail) {
+                            setState(() {
+                              _draggingLogicMod = true;
+                            });
+                          },
+                          onDragExited: (detail) {
+                            setState(() {
+                              _draggingLogicMod = false;
+                            });
+                          },
+                          child: Container(
+                            color: _draggingLogicMod ? Colors.blue.withValues(alpha: 0.4) : Palette.backgroundColor,
+                            child:
+                                logicMods.isEmpty
+                                    ? const Center(child: Text("Drop here"))
+                                    : Column(
+                                      children: [
+                                        Text("Logic Mods", style: TextStyle(fontSize: 30)),
+                                        SizedBox(height: 20),
+                                        Padding(
+                                          padding: const EdgeInsets.only(bottom: 10),
+                                          child: SizedBox(
+                                            width: 400,
+                                            child: ElevatedButton(
+                                              onPressed: () => _installAllMods(context, AvailableModTypes.logic),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Color.fromARGB(255, 241, 238, 34),
+                                              ),
+                                              child: Text(
+                                                "Enable/Disable All",
+                                                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        ...logicMods.map(
+                                          (mod) => Padding(
+                                            padding: const EdgeInsets.only(bottom: 10),
+                                            child: SizedBox(
+                                              width: 400,
+                                              child: EnabledButtonWidget(
+                                                text: mod.name,
+                                                onClick: () => _installMod(context, mod),
+                                                enabled: mod.outputDir != null,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

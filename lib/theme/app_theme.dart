@@ -13,5 +13,13 @@ class AppTheme {
     textTheme: const TextTheme(
       bodyMedium: TextStyle(fontSize: 16), // Set the default text size here
     ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Palette.buttonColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(0), // <-- set radius here
+        ),
+      ),
+    ),
   );
 }
